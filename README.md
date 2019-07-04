@@ -15,5 +15,6 @@ python3 hangman_bot.py
 If you use Windows, use
 ```
 py -m pip install slackclient
+python3 hangman_bot.py
 ```
 
