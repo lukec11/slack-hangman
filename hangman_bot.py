@@ -36,6 +36,7 @@ def message_on(**payload):
 
                                 data = {'user': data.get('user'), 'attempts': int(attempts), 'word': word}
                                 data['template'] = ['_' for i in range(len(word))]
+                                data['guesses'] = [] # For storing the list of guessed letters.
 
 
 
@@ -61,6 +62,8 @@ def message_on(**payload):
                                 letter = data.get('text')
                                 letter = letter.lower()
 
+                                
+
                                 if len(letter) != 1:
                                         nd = web_client.chat_postMessage(
                                                 channel=channel,
@@ -70,8 +73,22 @@ def message_on(**payload):
 
                                         return
 
+                                if letter in game['guesses']:
+                                        # Letter already guessed
+
+                                        nd = web_client.chat_postMessage(
+                                                channel=channel,
+                                                text=f"You already guessed that letter!",
+                                                thread_ts = data.get('thread_ts')
+                                        )
+
+                                        return
+
 
                                 word = game.get('word')
+                                game['guesses'].append(letter)
+
+
 
                                 old_template = copy.deepcopy(game['template'])
                                 print("old template " + str(old_template))
