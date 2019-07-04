@@ -62,8 +62,6 @@ def message_on(**payload):
                                 letter = data.get('text')
                                 letter = letter.lower()
 
-                                
-
                                 if len(letter) != 1:
                                         nd = web_client.chat_postMessage(
                                                 channel=channel,
