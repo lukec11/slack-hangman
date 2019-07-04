@@ -30,12 +30,25 @@ def message_on(**payload):
 
                 if data.get('channel')[0] == "D" :
                         try:
-                                word, attempts = data.get('text').split(" ")
+                                game_data = data.get('text').split(" ")
+                                word = " ".join(game_data[:-1])
+                                print("word is " + word)
+                                attempts = game_data[-1]
 
                                 word = word.lower()
 
                                 data = {'user': data.get('user'), 'attempts': int(attempts), 'word': word}
-                                data['template'] = ['_' for i in range(len(word))]
+                                data['template'] = []
+
+                                for c in word:
+                                        print ("character is " + c)
+                                        print(c == " ")
+                                        if c == " ":
+                                                print("Appending spaces")
+                                                data['template'].append(" ")
+                                        else:
+                                                data['template'].append("_")
+
                                 data['guesses'] = [] # For storing the list of guessed letters.
 
 
@@ -62,7 +75,7 @@ def message_on(**payload):
                                 letter = data.get('text')
                                 letter = letter.lower()
 
-                                if len(letter) != 1:
+                                if len(letter) != 1 or letter == " ":
                                         nd = web_client.chat_postMessage(
                                                 channel=channel,
                                                 text=f"Oh noes, that input is invalid!",
@@ -109,7 +122,7 @@ def message_on(**payload):
                                 if "".join(game['template']) == game['word']:
                                         nd = web_client.chat_postMessage(
                                                 channel=channel,
-                                                text=f"You win! The word is {game['word']}!",
+                                                text=f"You win! The word is `{game['word']}`!",
                                                 thread_ts = data.get('thread_ts')
                                         )
                                         del games[data.get('thread_ts')]
@@ -134,7 +147,7 @@ def message_on(**payload):
                                         if game['attempts'] == 0:
                                                 nd = web_client.chat_postMessage(
                                                         channel=channel,
-                                                        text=f"Oh noes! You ran out of attempts! The word is `{game['word']}`!",
+                                                        text=f"Oh noes! You ran out of attempts! The word was `{game['word']}`!",
                                                         thread_ts = data.get('thread_ts')
                                                 )
                                                 del games[data.get('thread_ts')]
