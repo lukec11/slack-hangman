@@ -19,6 +19,13 @@ def message_on(**payload):
         web_client = payload['web_client']
         rtm_client = payload['rtm_client']
 
+        try:
+                a = data['text']
+        except UnicodeEncodeError:
+                return
+        except KeyError:
+                return
+
         if data.get('user'):
                 print(BOT_ID == data.get('user'))
 
