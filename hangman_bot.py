@@ -66,6 +66,8 @@ def message_on(**payload):
 
                         except ValueError:
                                 print("Invalid input.")
+                        except UnicodeEncodeError:
+                                print("Bad.")
 
                 elif games.get(data.get('thread_ts')):
 
@@ -74,6 +76,16 @@ def message_on(**payload):
 
                                 letter = data.get('text')
                                 letter = letter.lower()
+
+                                if letter == game['word']:
+                                        nd = web_client.chat_postMessage(
+                                                channel=channel,
+                                                text=f"You win! The word is `{game['word']}`!",
+                                                thread_ts = data.get('thread_ts')
+                                        )
+                                        del games[data.get('thread_ts')]
+                                        return
+
 
                                 if len(letter) != 1 or letter == " ":
                                         nd = web_client.chat_postMessage(
