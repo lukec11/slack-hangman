@@ -21,6 +21,7 @@ def message_on(**payload):
 
         try:
                 a = data['text']
+                print(f"Test is {data.get('text')}")
         except UnicodeEncodeError:
                 return
         except KeyError:
@@ -28,8 +29,6 @@ def message_on(**payload):
 
         if data.get('user'):
                 print(BOT_ID == data.get('user'))
-
-        print(f"Test is {data.get('text')}")
 
 #        print("Data is " + str(data))
 
