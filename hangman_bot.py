@@ -37,7 +37,13 @@ def message_on(**payload):
                 if data.get('channel')[0] == "D" :
                         try:
                                 game_data = data.get('text').split(" ")
-                                word = " ".join(game_data[:-1])
+                                wordparts = [p.strip() for p in game_data[:-1]]
+
+                                for i in range(len(wordparts)):
+                                        if wordparts[i] == "":
+                                                del wordparts[i]
+
+                                word = " ".join(wordparts)
                                 print("word is " + word)
                                 attempts = game_data[-1]
 
