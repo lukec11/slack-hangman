@@ -6,6 +6,7 @@ import re
 import slack
 import copy
 import json
+from cloudant.client import CouchDB
 
 BOT_ID = ""
 games = {}
@@ -14,10 +15,31 @@ channel = "#hangman_test" # Put your channel here
 enable_banker_support = True
 banker_id = "<@banker>"
 
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
+        config = json.load(cf)
+        couch_user = config.get("couch_user")
+        couch_password = config.get('couch_password')
+        couch_url = config.get('couch_url')
+        couch_dbname = config.get("couch_dbname")
+
+client = CouchDB(
+        couch_user,
+        couch_password,
+        url=couch_url,
+        connect=True,
+        auto_renew=True
+)
+
+game_db = client[couch_dbname]
+
+print("Slack Hangman Bot\nStarting up...\n")
+
+
 @slack.RTMClient.run_on(event="message")
 def message_on(**payload):
         global BOT_ID
         global channel
+        global game_db
 
         mention = f"<@{BOT_ID}>"
         data = payload["data"]
@@ -26,18 +48,21 @@ def message_on(**payload):
 
         try:
                 a = data['text']
-                print(f"Test is {data.get('text')}")
+
         except UnicodeEncodeError:
                 return
         except KeyError:
                 return
 
         if data.get('user'):
+                print("Bot ID equals user ID?")
                 print(BOT_ID == data.get('user'))
+                print()
 
-#        print("Data is " + str(data))
+#        print("\nData is \n" + str(data))
 
         if data.get('text') and data.get('user'):
+
 
                 if data.get('channel')[0] == "D" :
                         try:
@@ -59,7 +84,6 @@ def message_on(**payload):
                                 data['players'] = []
 
                                 for c in word:
-                                        print ("character is " + c)
                                         print(c == " ")
                                         if c == " ":
                                                 print("Appending spaces")
@@ -76,21 +100,22 @@ def message_on(**payload):
                                         text=f"<@{data['user']}> has created a new game! There are {data['attempts']} attempts to guess the word! Your template is:\n {''.join(data.get('template'))}",
                                 )
 
-                                print('nd ts ' + nd['ts'])
 
-                                games[nd['ts']] = data
+                                data['_id'] = nd['ts']
 
-                                print(games)
+                                game_db.create_document(data)
 
                         except ValueError:
                                 print("Invalid input.")
                         except UnicodeEncodeError:
                                 print("Bad.")
 
-                elif games.get(data.get('thread_ts')):
+                elif data.get('thread_ts') in game_db:
 
                         if BOT_ID != data.get('user'):
-                                game = games.get(data.get('thread_ts'))
+                                game = game_db[data.get('thread_ts')]
+
+                                print("Retrieving game... from thread_ts " + data.get("thread_ts"))
 
                                 letter = data.get('text')
                                 letter = letter.lower()
@@ -112,7 +137,7 @@ def message_on(**payload):
                                         if enable_banker_support:
                                                 give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
 
-                                        del games[data.get('thread_ts')]
+                                        game.delete()
                                         return
 
 
@@ -143,12 +168,13 @@ def message_on(**payload):
 
 
                                 old_template = copy.deepcopy(game['template'])
-                                print("old template " + str(old_template))
 
-
+                                # Rebuild the template
                                 for i in range(len(word)):
                                         if word[i] == letter:
                                                 game['template'][i] = letter
+
+                                game.save()
 
                                 print("template is " + "".join(game['template']))
 
@@ -169,7 +195,7 @@ def message_on(**payload):
                                         if enable_banker_support:
                                                 give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
 
-                                        del games[data.get('thread_ts')]
+                                        game.delete()
 
 
 
@@ -203,7 +229,7 @@ def message_on(**payload):
                                                         text=f"Oh noes! You ran out of attempts! The word was `{game['word']}`!",
                                                         thread_ts = data.get('thread_ts')
                                                 )
-                                                del games[data.get('thread_ts')]
+                                                game.delete()
 
 
 

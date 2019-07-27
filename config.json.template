@@ -1,3 +1,8 @@
 {
-    "slack_token":  ""
+    "slack_token":  "",
+    "couch_user": "",
+    "couch_password": "",
+    "couch_url": "",
+    "couch_dbname": ""
+
 }
