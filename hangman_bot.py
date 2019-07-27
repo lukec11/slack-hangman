@@ -7,7 +7,10 @@ import json
 
 BOT_ID = ""
 games = {}
-channel = "#hangman" # Put your channel here
+channel = "#hangman_test" # Put your channel here
+
+enable_banker_support = True
+banker_id = "<@banker>"
 
 @slack.RTMClient.run_on(event="message")
 def message_on(**payload):
@@ -51,6 +54,7 @@ def message_on(**payload):
 
                                 data = {'user': data.get('user'), 'attempts': int(attempts), 'word': word}
                                 data['template'] = []
+                                data['players'] = []
 
                                 for c in word:
                                         print ("character is " + c)
@@ -89,12 +93,23 @@ def message_on(**payload):
                                 letter = data.get('text')
                                 letter = letter.lower()
 
+
+                                if (data.get('user') == game['user']):
+                                        winner = None
+
+                                else:
+                                        winner = data.get('user')
+
+                                # Win by guessing the entire word
                                 if letter == game['word']:
                                         nd = web_client.chat_postMessage(
                                                 channel=channel,
                                                 text=f"You win! The word is `{game['word']}`!",
                                                 thread_ts = data.get('thread_ts')
                                         )
+                                        if enable_banker_support:
+                                                give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
+
                                         del games[data.get('thread_ts')]
                                         return
 
@@ -149,7 +164,12 @@ def message_on(**payload):
                                                 text=f"You win! The word is `{game['word']}`!",
                                                 thread_ts = data.get('thread_ts')
                                         )
+                                        if enable_banker_support:
+                                                give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
+
                                         del games[data.get('thread_ts')]
+
+
 
 
                                 elif game['template'] != old_template:
@@ -158,6 +178,13 @@ def message_on(**payload):
                                                 text=f"The word is `{template}`!",
                                                 thread_ts = data.get('thread_ts')
                                         )
+
+                                        # Add user to players so we can give them gp for banking 
+                                        if enable_banker_support:
+                                                if data.get("user") != game.get("user"):
+                                                        if data.get("user") not in game['players']:
+                                                                game['players'].append(data.get("user"))
+
 
 
                                 elif game['template'] == old_template:
@@ -175,6 +202,33 @@ def message_on(**payload):
                                                         thread_ts = data.get('thread_ts')
                                                 )
                                                 del games[data.get('thread_ts')]
+
+
+
+def give_gp(players, thread, web_client, winner):
+
+        # Each player gets 1gp, the winner gets 7gp
+
+        global banker_id
+        global channel
+
+        for player in players:
+                web_client.chat_postMessage(
+                        channel=channel,
+                        text=f"{banker_id} give <@{player}> 1 for participating in a hangman game",
+                        thread_ts = thread
+                )
+
+        if winner:
+                web_client.chat_postMessage(
+                        channel=channel,
+                        text=f"{banker_id} give <@{winner}> 7 for winning in a hangman game",
+                        thread_ts = thread
+                )
+
+
+
+
 
 
 
