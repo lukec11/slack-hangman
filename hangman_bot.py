@@ -74,7 +74,7 @@ def message_on(**payload):
                                                 del wordparts[i]
 
                                 word = " ".join(wordparts)
-                                print("word is " + word)
+                                print("Word is " + word)
                                 attempts = game_data[-1]
 
                                 word = word.lower()
