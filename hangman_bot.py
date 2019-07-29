@@ -10,7 +10,7 @@ from cloudant.client import CouchDB
 
 BOT_ID = ""
 games = {}
-channel = "#hangman_test" # Put your channel here
+channel = "#hangman" # Put your channel here
 
 enable_banker_support = True
 banker_id = "<@banker>"
@@ -244,14 +244,16 @@ def give_gp(players, thread, web_client, winner):
                 web_client.chat_postMessage(
                         channel=channel,
                         text=f"{banker_id} give <@{player}> 1 for participating in a hangman game",
-                        thread_ts = thread
+                        thread_ts = thread,
+                        as_user = True
                 )
 
         if winner:
                 web_client.chat_postMessage(
                         channel=channel,
                         text=f"{banker_id} give <@{winner}> 7 for winning in a hangman game",
-                        thread_ts = thread
+                        thread_ts = thread,
+                        as_user = True
                 )
 
 
