@@ -204,7 +204,7 @@ def message_on(**payload):
                                         game_id = new_game.game["_id"]
                                         web_client.chat_postMessage(
                                                 channel=data.get('channel'),
-                                                text=f":heavy_check_mark: All right. I've started the game. To fund the game, please type in \n```/give {mention} {session['gp']} for {game_id}```."
+                                                text=f":heavy_check_mark: All right. I've started the game. To fund the game, please type in \n```/give {mention} {session['gp']} for {game_id}```"
                                         )
 
                         else: # Tell the user how to start a game.

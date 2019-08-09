@@ -3,6 +3,8 @@
     "couch_user": "",
     "couch_password": "",
     "couch_url": "",
-    "couch_dbname": ""
+    "couch_dbname": "",
+    "channel": "",
+    "banker_id": ""
 
 }

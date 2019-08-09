@@ -293,7 +293,7 @@ class Game:
                 template += " "
             # If not a space, add an underscore.
             else:
-                template += "_"
+                template += "‗"
 
         return template
 
