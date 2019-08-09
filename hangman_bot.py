@@ -7,6 +7,7 @@ import slack
 import copy
 import json
 from cloudant.client import CouchDB
+from game import Game
 
 BOT_ID = ""
 games = {}
@@ -31,13 +32,13 @@ client = CouchDB(
 )
 
 game_db = client[couch_dbname]
-
+game_creation_sessions = {} # Creation sessions
 print("Slack Hangman Bot\nStarting up...\n")
 
 
 @slack.RTMClient.run_on(event="message")
 def message_on(**payload):
-        global BOT_ID
+        global BOT_ID # To make sure the bot doesn't reply to its messages in a thread.
         global channel
         global game_db
 
@@ -46,222 +47,208 @@ def message_on(**payload):
         web_client = payload['web_client']
         rtm_client = payload['rtm_client']
 
+        if BOT_ID == data.get('user'):
+                return
+
         try:
                 a = data['text']
-
         except UnicodeEncodeError:
                 return
         except KeyError:
                 return
 
-        if data.get('user'):
+        if data.get('user'): # Debug to figure out if bot is responding to itself.
                 print("Bot ID equals user ID?")
                 print(BOT_ID == data.get('user'))
-                print()
 
 #        print("\nData is \n" + str(data))
 
         if data.get('text') and data.get('user'):
 
+                if data.get('text').startswith(mention):
+                        # Bot got mentioned!
+                        web_client.chat_postMessage(
+                                channel=data.get('channel'),
+                                text=f":thinking_face: I don't think I quite understand. Try `!newgame` in a DM to start a game and if you want to cancel the game you're making try `!stopgame` :wink:",
+                        )
+        
+                if data.get('channel')[0] == "D":
+                        # Is a DM, start the interactive process of making a new game
+                        text = data.get('text')
 
-                if data.get('channel')[0] == "D" :
-                        try:
-                                game_data = data.get('text').split(" ")
-                                wordparts = [p.strip() for p in game_data[:-1]]
-
-                                for i in range(len(wordparts)):
-                                        if wordparts[i] == "":
-                                                del wordparts[i]
-
-                                word = " ".join(wordparts)
-                                print("Word is " + word)
-                                attempts = game_data[-1]
-
-                                word = word.lower()
-
-                                data = {'user': data.get('user'), 'attempts': int(attempts), 'word': word}
-                                data['template'] = []
-                                data['players'] = []
-
-                                for c in word:
-                                        print(c == " ")
-                                        if c == " ":
-                                                print("Appending spaces")
-                                                data['template'].append(" ")
-                                        else:
-                                                data['template'].append("_")
-
-                                data['guesses'] = [] # For storing the list of guessed letters.
+                        if data.get('user') == "UH50T81A6": # Banker is DM'ing you about funding GP, ignore threads.
+                                if data.get('thread_ts'): # In thread, print and do nothing
+                                        print(text)
+                                        return
+                                
+                                transaction_raw = text.split("|")
+                                user = transaction_raw[1].strip() # Need this for potential refunds.
+                                reason = transaction_raw[3].strip()[5:].replace('"',"") # Get reason aka thread
+                                amount = int(transaction_raw[2].strip()) # Get amount
 
 
+                                # Get game.
+                                fund_game = Game.from_db(reason)
+                                if fund_game.game['gp'] == amount: # Funded game. Correct amount of gp was provided.
+                                        # Game funded
+                                        fund_game.game['gp_funded'] = True
+                                        fund_game.game.save()
+                                        fund_game.post_funded()
 
-                                nd = web_client.chat_postMessage(
-                                        channel=channel,
-                                        text=f"<@{data['user']}> has created a new game! There are {data['attempts']} attempts to guess the word! Your template is:\n {''.join(data.get('template'))}",
+                                else: # Refund the user, they didn't pay enough
+                                        web_client.chat_postMessage(
+                                                channel=data.get('channel'),
+                                                text=f"give {user} {amount} for Declined funding",
+                                                as_user=True
+                                        )
+                                
+
+                                
+                        if text == "!newgame":
+                                web_client.chat_postMessage(
+                                        channel=data.get('channel'),
+                                        text=f":heavy_check_mark: Let's get started! What's the word or phrase?"
                                 )
 
+                                # Add to session
+                                game_creation = {}
+                                game_creation_sessions[data.get('user')] = game_creation
+                                return
+                        if text == "!stopgame":
+                                # Delete the session and tell the user
+                                del game_creation_sessions[data.get('user')]
+                                
+                                web_client.chat_postMessage(
+                                        channel=data.get('channel'),
+                                        text=f"I've stopped the game you were creating."
+                                )
 
-                                data['_id'] = nd['ts']
+                        if data.get('user') in game_creation_sessions:
+                                # User started a session
+                                session = game_creation_sessions.get(data.get('user'))
+                                if not session.get('word'): # If no word in session, add that first
+                                        session['word'] = data.get('text')
 
-                                game_db.create_document(data)
+                                        # Save session
+                                        game_creation_sessions[data.get('user')] = session
 
-                        except ValueError:
-                                print("Invalid input.")
-                        except UnicodeEncodeError:
-                                print("Bad.")
-
-                elif data.get('thread_ts') in game_db:
-
-                        if BOT_ID != data.get('user'):
-                                game = game_db[data.get('thread_ts')]
-
-                                print("Retrieving game... from thread_ts " + data.get("thread_ts"))
-
-                                letter = data.get('text')
-                                letter = letter.lower()
-
-
-                                if (data.get('user') == game['user']):
-                                        winner = None
-
-                                else:
-                                        winner = data.get('user')
-
-                                # Win by guessing the entire word
-                                if letter == game['word']:
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"You win! The word is `{game['word']}`!",
-                                                thread_ts = data.get('thread_ts')
+                                        web_client.chat_postMessage(
+                                                channel=data.get('channel'),
+                                                text=f":heavy_check_mark: Great! Now how many attempts should this game have?"
                                         )
-                                        if enable_banker_support:
-                                                give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
+                                        
+                                elif not session.get('attempts'): # Proceed to attempts
+                                        session['attempts'] = int(data.get('text'))
 
-                                        game.delete()
-                                        return
+                                        # Save session
+                                        game_creation_sessions[data.get('user')] = session
 
-
-                                if len(letter) != 1 or letter == " ":
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"Oh noes, that input is invalid!",
-                                                thread_ts = data.get('thread_ts')
+                                        web_client.chat_postMessage(
+                                                channel=data.get('channel'),
+                                                text=f":heavy_check_mark: Should this game be case sensitive (yes/anything for no)?"
                                         )
+                                elif session.get("case_sensitive") == None: # Proceed to attempts
+                                        session['case_sensitive'] = True if data.get("text").lower() == "yes" else False
+                                        case_sens_str = "" if session['case_sensitive'] else "Case sensitivity is *disabled*. "
 
-                                        return
+                                        # Save session
+                                        game_creation_sessions[data.get('user')] = session
 
-                                if letter in game['guesses']:
-                                        # Letter already guessed
-
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"You already guessed that letter!",
-                                                thread_ts = data.get('thread_ts')
+                                        web_client.chat_postMessage(
+                                                channel=data.get('channel'),
+                                                text=f"{case_sens_str}Would you like to fund this game with gp (yes/anything for no)? "
                                         )
+                                        
+                                elif session.get("gp_userfunded") == None: # Proceed to attempts
+                                        session['gp_userfunded'] = True if data.get('text') == "yes" else False
+                                        game_creation_sessions[data.get('user')] = session
 
-                                        return
-
-
-                                word = game.get('word')
-                                game['guesses'].append(letter)
-
-
-
-                                old_template = copy.deepcopy(game['template'])
-
-                                # Rebuild the template
-                                for i in range(len(word)):
-                                        if word[i] == letter:
-                                                game['template'][i] = letter
-
-                                game.save()
-
-                                print("template is " + "".join(game['template']))
-
-                                print(data.get('user'))
-                                print("Guess is " + letter)
-
-                                template = "".join(game['template'])
-
-                                print(old_template)
-
-
-                                if "".join(game['template']) == game['word']:
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"You win! The word is `{game['word']}`!",
-                                                thread_ts = data.get('thread_ts')
-                                        )
-                                        if enable_banker_support:
-                                                give_gp(game['players'], data.get('thread_ts'), web_client, winner=winner)
-
-                                        game.delete()
-
-
-
-
-                                elif game['template'] != old_template:
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"The word is `{template}`!",
-                                                thread_ts = data.get('thread_ts')
-                                        )
-
-                                        # Add user to players so we can give them gp for banking 
-                                        if enable_banker_support:
-                                                if data.get("user") != game.get("user"):
-                                                        if data.get("user") not in game['players']:
-                                                                game['players'].append(data.get("user"))
-
-
-
-                                elif game['template'] == old_template:
-                                        game['attempts'] -= 1
-                                        nd = web_client.chat_postMessage(
-                                                channel=channel,
-                                                text=f"Oh noes! That was wrong!! {game['attempts']} attempts remaining...",
-                                                thread_ts = data.get('thread_ts')
-                                        )
-
-                                        if game['attempts'] == 0:
-                                                nd = web_client.chat_postMessage(
-                                                        channel=channel,
-                                                        text=f"Oh noes! You ran out of attempts! The word was `{game['word']}`!",
-                                                        thread_ts = data.get('thread_ts')
+                                        if not session['gp_userfunded']:
+                                                # Create the game with 4 gp.
+                                                new_game = Game(
+                                                        data.get('user'),
+                                                        session['word'],
+                                                        session['attempts'],
+                                                        session['case_sensitive'],
+                                                        4,
+                                                        True # This is to say the game is already paid for 
                                                 )
-                                                game.delete()
+                                                new_game.start_game()
+
+                                                web_client.chat_postMessage(
+                                                        channel=data.get('channel'),
+                                                        text=f":thumbsup: The new game was started!"
+                                                )
+                                                del game_creation_sessions[data.get('user')]
+                                        elif session.get("gp_userfunded"):
+                                                # True, so we will do this process.
+                                                web_client.chat_postMessage(
+                                                        channel=data.get('channel'),
+                                                        text=f":thumbsup: How much gp do you want the game to be worth?"
+                                                )
+                                elif not session.get('gp'):
+                                        session['gp'] = int(data.get('text'))
+
+                                        # Create a game and get the ID
+                                        new_game = Game(
+                                                data.get('user'),
+                                                session['word'],
+                                                session['attempts'],
+                                                session['case_sensitive'],
+                                                session['gp'],
+                                                False # Not funded!
+                                        )
+                                        new_game.start_game()
+                                        
+                                        # Provide instructions on how to fund the game.
+                                        game_id = new_game.game["_id"]
+                                        web_client.chat_postMessage(
+                                                channel=data.get('channel'),
+                                                text=f":heavy_check_mark: All right. I've started the game. To fund the game, please type in \n```/give {mention} {session['gp']} for {game_id}```."
+                                        )
+
+                        else: # Tell the user how to start a game.
+                                web_client.chat_postMessage(
+                                        channel=data.get('channel'),
+                                        text=f":thinking_face: I don't think I quite understand. Try `!newgame` to start a game and if you want to cancel the game you're making try `!stopgame` :wink:",
+                                        thread_ts=data.get('ts')
+                                )
+                                        
+
+                                        
+                                                
+                                                
+                                                
+                                        
+        if data.get('thread_ts') and (BOT_ID != data.get('user')): # For the actual game itself.
+                # Check if it's a game
+                game = Game.from_db(data.get('thread_ts'))
+
+                if game == None: # Game doesn't exist.
+                        return 
+                
+                if len(game.game.keys()) == 1 : # Check if game is deleted. If it is, do nothing.
+                        return
+
+                # Is a game, get guess
+
+                guess = data.get('text').strip()
+
+                # Handle !word
+                if guess == "!word":
+                        game.display_word()
+                        
+                # Handle regular guess
+                if data.get("user") != BOT_ID: # Make sure the bot isn't replying to itself.
+                        game.guess(guess, data.get('user'))
 
 
+                
+                                        
 
-def give_gp(players, thread, web_client, winner):
-
-        # Each player gets 1gp, the winner gets 7gp
-
-        global banker_id
-        global channel
-
-        for player in players:
-                web_client.chat_postMessage(
-                        channel=channel,
-                        text=f"{banker_id} give <@{player}> 1 for participating in a hangman game",
-                        thread_ts = thread,
-                        as_user = True
-                )
-
-        if winner:
-                web_client.chat_postMessage(
-                        channel=channel,
-                        text=f"{banker_id} give <@{winner}> 7 for winning in a hangman game",
-                        thread_ts = thread,
-                        as_user = True
-                )
-
-
-
-
-
-
-
+                        
+                        
+                                
 
 
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
