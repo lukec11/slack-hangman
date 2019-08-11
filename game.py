@@ -221,12 +221,14 @@ class Game:
 
     def _initiate_lose(self):
         """Destroy game"""
+        # Get word
+        word = self.game['word']
 
         # Alert user
         self.slack_client.chat_postMessage(
             channel=self.channel_name,
             thread_ts=self.game['_id'],
-            text="Regrettably, you ran out of attempts. The word was \"{self.game['word']}\". Better luck next time!",
+            text='Regrettably, you ran out of attempts.\nThe word was "{word}."\nBetter luck next time!',
             as_user=True
         )
 
@@ -241,11 +243,15 @@ class Game:
     def _initiate_win(self, winner):
         """Initiate winning sequence"""
 
+        # Get word
+        word = self.game['word']
+
         # Alert user
         self.slack_client.chat_postMessage(
             channel=self.channel_name,
             thread_ts=self.game['_id'],
-            text=f"Congrats to <@{winner}>! They won the game! The word was \"{self.game['word']}!\""
+                text=f'Congrats to <@{winner}>!\nThey won the game!\nThe word was "{word}."',
+                as_user=True
         )
 
         # Give out gp.
