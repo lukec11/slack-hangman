@@ -297,7 +297,7 @@ class Game:
             # If it's a space, add a space to the template
             if c == " ":
                 template += " "
-            if c == ":":
+            elif c == ":":
                 template += ":"
             # If not a space, add an underscore.
             else:
