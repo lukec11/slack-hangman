@@ -5,7 +5,7 @@ import slack
 import copy
 import json
 from cloudant.client import CouchDB
-import requests # for new gp api
+import requests # needed for new gp api
 
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
         config = json.load(cf)
