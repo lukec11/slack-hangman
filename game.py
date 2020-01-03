@@ -5,6 +5,7 @@ import slack
 import copy
 import json
 from cloudant.client import CouchDB
+import requests # for new gp api
 
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
         config = json.load(cf)
@@ -15,6 +16,9 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json
         couch_dbname = config.get("couch_dbname")
         channel_name = config.get('channel')
         banker_id = config.get('banker_id')
+        banker_api = config.get('banker_api')
+        banker_api_key = config.get('banker_api_key')
+        bot_id = config.get('bot_id')
 
 slack_client = slack.WebClient(token=slack_token)
         
@@ -51,9 +55,15 @@ class Game:
 
         global slack_client
         global channel_name
+        global banker_api
+        global banker_api_key
+        global bot_id
         
         self.slack_client = slack_client
         self.channel_name = channel_name
+        self.banker_api = banker_api
+        self.banker_api_key = banker_api_key
+        self.bot_id = bot_id
 
     @staticmethod
     def from_db(thread):
@@ -262,7 +272,7 @@ class Game:
 
         self.game.delete()
 
-
+    '''
     def _give_gp(self, winner):
 
         # Each player gets 1gp, the winner gets 7gp
@@ -285,6 +295,29 @@ class Game:
                 thread_ts = self.game['_id'],
                 as_user = True
             )
+    '''
+    def _give_gp(self, winner):
+        gp = self.game['gp']
+        for player in self.game['players']:
+            self.requests.post(f'{self.banker_api}/give', 
+                json={
+                    "token" : self.banker_api_key,
+                    "send_id" : player,
+                    "give_id" : self.bot_id,
+                    "gp" : 1,
+                    "reason" : "For participating in a hangman game"
+                })
+        if winner and (winner != self.game['user']):
+            self.requests.post(f'{self.banker_api}/give', 
+                json={
+                    "token" : self.banker_api_key,
+                    "send_id" : winner,
+                    "give_id" : self.bot_id,
+                    "gp" : gp,
+                    "reason" : "For winning in a hangman game"
+                })
+        
+
 
 
     
