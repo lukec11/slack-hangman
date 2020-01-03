@@ -58,12 +58,14 @@ class Game:
         global banker_api
         global banker_api_key
         global bot_id
+        global requests
         
         self.slack_client = slack_client
         self.channel_name = channel_name
         self.banker_api = banker_api
         self.banker_api_key = banker_api_key
         self.bot_id = bot_id
+        self.requests = requests
 
     @staticmethod
     def from_db(thread):
@@ -307,6 +309,7 @@ class Game:
                     "gp" : 1,
                     "reason" : "For participating in a hangman game"
                 })
+        
         if winner and (winner != self.game['user']):
             self.requests.post(f'{self.banker_api}/give', 
                 json={
@@ -316,6 +319,18 @@ class Game:
                     "gp" : gp,
                     "reason" : "For winning in a hangman game"
                 })
+            self.slack_client.chat_postMessage(
+                channel=self.channel_name,
+                text=f"Congrats to <@{winner}> for winning in a hangman game! They have just recieved {gp} gp.",
+                thread_ts = self.game['_id'],
+                as_user = True
+            )
+        self.slack_client.chat_postMessage(
+                channel=self.channel_name,
+                text=f"Participants in the game, you each get 1 gp. Thanks for playing hangman!",
+                thread_ts = self.game['_id'],
+                as_user = True
+            )
         
 
 
