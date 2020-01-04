@@ -274,42 +274,19 @@ class Game:
 
         self.game.delete()
 
-    '''
-    def _give_gp(self, winner):
-
-        # Each player gets 1gp, the winner gets 7gp
-
-        global banker_id
-
-        for player in self.game['players']:
-                self.slack_client.chat_postMessage(
-                        channel=self.channel_name,
-                        text=f"<@{banker_id}> give <@{player}> 1 for participating in a hangman game",
-                        thread_ts = self.game['_id'],
-                        as_user = True
-                )
-
-        if winner and (winner != self.game['user']): # Make sure winner is not the creator of the game
-            gp = self.game['gp']
-            self.slack_client.chat_postMessage(
-                channel=self.channel_name,
-                text=f"<@{banker_id}> give <@{winner}> {gp} for winning in a hangman game",
-                thread_ts = self.game['_id'],
-                as_user = True
-            )
-    '''
     def _give_gp(self, winner):
         gp = self.game['gp']
         for player in self.game['players']:
-            self.requests.post(f'{self.banker_api}/give', 
-                json={
-                    "token" : self.banker_api_key,
-                    "send_id" : player,
-                    "give_id" : self.bot_id,
-                    "gp" : 1,
-                    "reason" : "For participating in a hangman game"
-                })
-        
+            if player != winner:
+                self.requests.post(f'{self.banker_api}/give', 
+                    json={
+                        "token" : self.banker_api_key,
+                        "send_id" : player,
+                        "give_id" : self.bot_id,
+                        "gp" : 1,
+                        "reason" : "For participating in a hangman game"
+                    })
+            
         if winner and (winner != self.game['user']):
             self.requests.post(f'{self.banker_api}/give', 
                 json={
