@@ -5,6 +5,7 @@ import slack
 import copy
 import json
 from cloudant.client import CouchDB
+import requests # for new gp api
 
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
         config = json.load(cf)
@@ -15,6 +16,9 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json
         couch_dbname = config.get("couch_dbname")
         channel_name = config.get('channel')
         banker_id = config.get('banker_id')
+        banker_api = config.get('banker_api')
+        banker_api_key = config.get('banker_api_key')
+        bot_id = config.get('bot_id')
 
 slack_client = slack.WebClient(token=slack_token)
         
@@ -51,9 +55,17 @@ class Game:
 
         global slack_client
         global channel_name
+        global banker_api
+        global banker_api_key
+        global bot_id
+        global requests
         
         self.slack_client = slack_client
         self.channel_name = channel_name
+        self.banker_api = banker_api
+        self.banker_api_key = banker_api_key
+        self.bot_id = bot_id
+        self.requests = requests
 
     @staticmethod
     def from_db(thread):
@@ -262,29 +274,42 @@ class Game:
 
         self.game.delete()
 
-
     def _give_gp(self, winner):
-
-        # Each player gets 1gp, the winner gets 7gp
-
-        global banker_id
-
+        gp = self.game['gp']
         for player in self.game['players']:
-                self.slack_client.chat_postMessage(
-                        channel=self.channel_name,
-                        text=f"<@{banker_id}> give <@{player}> 1 for participating in a hangman game",
-                        thread_ts = self.game['_id'],
-                        as_user = True
-                )
-
-        if winner and (winner != self.game['user']): # Make sure winner is not the creator of the game
-            gp = self.game['gp']
+            if player != winner:
+                self.requests.post(f'{self.banker_api}/give', 
+                    json={
+                        "token" : self.banker_api_key,
+                        "send_id" : player,
+                        "give_id" : self.bot_id,
+                        "gp" : 1,
+                        "reason" : "For participating in a hangman game"
+                    })
+            
+        if winner and (winner != self.game['user']):
+            self.requests.post(f'{self.banker_api}/give', 
+                json={
+                    "token" : self.banker_api_key,
+                    "send_id" : winner,
+                    "give_id" : self.bot_id,
+                    "gp" : gp,
+                    "reason" : "For winning in a hangman game"
+                })
             self.slack_client.chat_postMessage(
                 channel=self.channel_name,
-                text=f"<@{banker_id}> give <@{winner}> {gp} for winning in a hangman game",
+                text=f"Congrats to <@{winner}> for winning in a hangman game! They have just recieved {gp} gp.",
                 thread_ts = self.game['_id'],
                 as_user = True
             )
+        self.slack_client.chat_postMessage(
+                channel=self.channel_name,
+                text=f"Participants in the game, you each get 1 gp. Thanks for playing hangman!",
+                thread_ts = self.game['_id'],
+                as_user = True
+            )
+        
+
 
 
     
