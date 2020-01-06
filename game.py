@@ -282,7 +282,7 @@ class Game:
                     json={
                         "token" : self.banker_api_key,
                         "send_id" : player,
-                        "give_id" : self.bot_id,
+                        "bot_id" : self.bot_id,
                         "gp" : 1,
                         "reason" : "For participating in a hangman game"
                     })
@@ -292,7 +292,7 @@ class Game:
                 json={
                     "token" : self.banker_api_key,
                     "send_id" : winner,
-                    "give_id" : self.bot_id,
+                    "bot_id" : self.bot_id,
                     "gp" : gp,
                     "reason" : "For winning in a hangman game"
                 })
