@@ -1,6 +1,6 @@
 config.json
-*.*~
-__pycache__/
+*.pyc
+__pycache__/*
 .vscode
 
 #GitHub default for python
@@ -59,3 +59,4 @@ docs/_build/
 
 # PyBuilder
 target/
+__pycache__/game.cpython-37.pyc
