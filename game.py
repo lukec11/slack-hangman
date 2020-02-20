@@ -240,7 +240,7 @@ class Game:
         self.slack_client.chat_postMessage(
             channel=self.channel_name,
             thread_ts=self.game['_id'],
-            text='Regrettably, you ran out of attempts.\nThe word was "{word}."\nBetter luck next time!',
+            text=f'Regrettably, you ran out of attempts.\nThe word was "{word}."\nBetter luck next time!',
             as_user=True
         )
 
