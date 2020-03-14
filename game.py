@@ -315,7 +315,7 @@ class Game:
         """Build template for hangman games"""
 
         template = ''
-        exempted = [' ', ':', '<', '>']
+        exempted = [' ', ':', '<', '>', '&']
         for c in word:
             # If it's an exempt char, show in the template
             if c in exempted:
