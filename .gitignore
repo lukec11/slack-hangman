@@ -1,6 +1,6 @@
 config.json
 *.pyc
-__pycache__/*
+__pycache__/
 .vscode
 
 #GitHub default for python
