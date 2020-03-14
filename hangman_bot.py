@@ -136,11 +136,14 @@ def message_on(**payload):
 
                     web_client.chat_postMessage(
                         channel=data.get('channel'),
-                        text=f":heavy_check_mark: Great! Now how many attempts should this game have?"
+                        text=f":heavy_check_mark: Great! Now how many attempts should this game have (defaults to 10)?"
                     )
 
                 elif not session.get('attempts'):  # Proceed to attempts
-                    session['attempts'] = int(data.get('text'))
+                    if data.get('text').isnumeric():
+                        session['attempts'] = int(data.get('text'))
+                    else:
+                        session['attempts'] = 10
 
                     # Save session
                     game_creation_sessions[data.get('user')] = session
@@ -231,7 +234,6 @@ def message_on(**payload):
             return
 
         # Is a game, get guess
-
         guess = data.get('text').strip()
 
         # Handle !word
