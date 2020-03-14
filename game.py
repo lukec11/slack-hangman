@@ -315,13 +315,12 @@ class Game:
         """Build template for hangman games"""
 
         template = ''
+        exempted = [' ', ':', '<', '>']
         for c in word:
-            # If it's a space, add a space to the template
-            if c == " ":
-                template += " "
-            elif c == ":":
-                template += ":"
-            # If not a space, add an underscore.
+            # If it's an exempt char, show in the template
+            if c in exempted:
+                template += c
+            # If not an exempt char, add an underscore.
             else:
                 template += "‗"
 
