@@ -4,3 +4,4 @@ requests==2.22.0
 slackclient==2.5.0
 urllib3==1.25.7
 autopep8==1.5
+pycodestyle==2.5.0
