@@ -286,7 +286,7 @@ class Game:
                                        "send_id": player,
                                        "bot_id": self.bot_id,
                                        "gp": 1,
-                                       "reason": "Participating in a hangman game"
+                                       "reason": "participating in a hangman game"
                                    })
 
         if winner and (winner != self.game['user']):
@@ -296,7 +296,7 @@ class Game:
                                    "send_id": winner,
                                    "bot_id": self.bot_id,
                                    "gp": gp,
-                                   "reason": "Winning in a hangman game"
+                                   "reason": "winning in a hangman game"
                                })
             self.slack_client.chat_postMessage(
                 channel=self.channel_name,
