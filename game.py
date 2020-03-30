@@ -244,7 +244,7 @@ class Game:
         self.slack_client.chat_postMessage(
             channel=self.channel_name,
             thread_ts=self.game['_id'],
-            text=f'Regrettably, you ran out of attempts.\nThe word was "{word}"\nBetter luck next time!',
+            text=f'Regrettably, you ran out of attempts.\nThe word was `{word}`.\nBetter luck next time!',
             as_user=True
         )
 
@@ -286,7 +286,7 @@ class Game:
                                        "send_id": player,
                                        "bot_id": self.bot_id,
                                        "gp": 1,
-                                       "reason": "For participating in a hangman game"
+                                       "reason": "Participating in a hangman game"
                                    })
 
         if winner and (winner != self.game['user']):
