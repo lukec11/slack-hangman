@@ -264,7 +264,7 @@ class Game:
         self.slack_client.chat_postMessage(
             channel=self.channel_name,
             thread_ts=self.game['_id'],
-            text=f'Congrats to <@{winner}>!\nThey won the game!\nThe word was "{word}."',
+            text=f'Congrats to <@{winner}>!\nThey won the game!\nThe word was `{word}`.',
             as_user=True
         )
 
@@ -296,7 +296,7 @@ class Game:
                                    "send_id": winner,
                                    "bot_id": self.bot_id,
                                    "gp": gp,
-                                   "reason": "For winning in a hangman game"
+                                   "reason": "Winning in a hangman game"
                                })
             self.slack_client.chat_postMessage(
                 channel=self.channel_name,
