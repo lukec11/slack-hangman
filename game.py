@@ -103,7 +103,7 @@ class Game:
         game_msg += f":point_right: There are {attempts} attempts\n"
         game_msg += f":point_right: The game is worth {gp} gp\n"
         # No space since the case_sensitive_word will have the space
-        game_msg += f":point_right: The game is {case_sensitive_word} case sensitive\n"
+        game_msg += f":point_right: The game is {case_sensitive_word}case sensitive\n"
         game_msg += f":thumbsup: To get started, reply with your guess in a new thread!"
 
         # If game not funded add a message about that
