@@ -3,5 +3,5 @@ CouchDB==1.2
 requests==2.23.0
 slackclient==2.5.0
 urllib3==1.25.8
-autopep8==1.5
+autopep8==1.5.1
 pycodestyle==2.5.0
