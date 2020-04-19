@@ -1,4 +1,4 @@
-cloudant==2.12.0
+cloudant==2.13.0
 CouchDB==1.2
 requests==2.23.0
 slackclient==2.5.0
