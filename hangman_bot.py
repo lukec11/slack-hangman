@@ -16,12 +16,11 @@ channel = "#hangman"  # Put your channel here
 enable_banker_support = True
 banker_id = "<@banker>"
 
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
-    config = json.load(cf)
-    couch_user = config.get("couch_user")
-    couch_password = config.get('couch_password')
-    couch_url = config.get('couch_url')
-    couch_dbname = config.get("couch_dbname")
+config = os.environ
+couch_user = config.get("couch_user")
+couch_password = config.get('couch_password')
+couch_url = config.get('couch_url')
+couch_dbname = config.get("couch_dbname")
 
 client = CouchDB(
     couch_user,

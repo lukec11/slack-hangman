@@ -7,18 +7,18 @@ import json
 from cloudant.client import CouchDB
 import requests  # needed for new gp api
 
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
-    config = json.load(cf)
-    slack_token = config.get('slack_token')
-    couch_user = config.get("couch_user")
-    couch_password = config.get('couch_password')
-    couch_url = config.get('couch_url')
-    couch_dbname = config.get("couch_dbname")
-    channel_name = config.get('channel')
-    banker_id = config.get('banker_id')
-    banker_api = config.get('banker_api')
-    banker_api_key = config.get('banker_api_key')
-    bot_id = config.get('bot_id')
+
+config = os.environ
+slack_token = config.get('slack_token')
+couch_user = config.get("couch_user")
+couch_password = config.get('couch_password')
+couch_url = config.get('couch_url')
+couch_dbname = config.get("couch_dbname")
+channel_name = config.get('channel')
+banker_id = config.get('banker_id')
+banker_api = config.get('banker_api')
+banker_api_key = config.get('banker_api_key')
+bot_id = config.get('bot_id')
 
 slack_client = slack.WebClient(token=slack_token)
 
