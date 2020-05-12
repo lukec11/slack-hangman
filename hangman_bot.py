@@ -245,9 +245,7 @@ def message_on(**payload):
             game.guess(guess, data.get('user'))
 
 
-with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as cf:
-    config = json.load(cf)
-    slack_token = config["slack_token"]
+slack_token = os.environ["slack_token"]
 
 rtm_client = slack.RTMClient(token=slack_token)
 
