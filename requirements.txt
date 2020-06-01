@@ -1,7 +1,7 @@
 cloudant==2.13.0
 CouchDB==1.2
 requests==2.23.0
-slackclient==2.6.1
+slackclient==2.6.2
 urllib3==1.25.9
 autopep8==1.5.3
 pycodestyle==2.6.0
