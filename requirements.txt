@@ -1,6 +1,6 @@
 cloudant==2.13.0
 CouchDB==1.2
-requests==2.23.0
+requests==2.24.0
 slackclient==2.7.1
 urllib3==1.25.9
 autopep8==1.5.3
