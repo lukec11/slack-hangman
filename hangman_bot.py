@@ -161,12 +161,11 @@ def message_on(**payload):
 
                     web_client.chat_postMessage(
                         channel=data.get('channel'),
-                        text=f"{case_sens_str}Would you like to fund this game with gp (yes/anything for no)? "
+                        text=f"{case_sens_str}Would you like to fund this game with gp (WIP - Say No or it will break)? "
                     )
 
                 elif session.get("gp_userfunded") == None:  # Proceed to attempts
-                    session['gp_userfunded'] = True if data.get(
-                        'text') == "yes" else False
+                    session['gp_userfunded'] = False
                     game_creation_sessions[data.get('user')] = session
 
                     if not session['gp_userfunded']:
