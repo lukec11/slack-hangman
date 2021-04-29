@@ -1,0 +1,16 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: autopep8
+    versions:
+    - 1.5.4
+    - 1.5.5
+  - dependency-name: urllib3
+    versions:
+    - 1.26.3
